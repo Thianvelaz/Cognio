@@ -18,7 +18,7 @@ class EmbeddingService:
         self.model_name = settings.embed_model
         self.device = settings.embed_device
         self.model: SentenceTransformer | None = None
-        self.embedding_dim = 384  # Default for all-MiniLM-L6-v2
+        self.embedding_dim = 768  # Multilingual mpnet uses 768 dimensions
 
     def load_model(self) -> None:
         """Load the sentence-transformer model."""

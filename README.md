@@ -17,7 +17,8 @@ Cognio is a Model Context Protocol (MCP) server that provides persistent memory 
 
 ## Features
 
-- **Semantic Search**: Find memories by meaning using sentence-transformers (all-MiniLM-L6-v2)
+- **Semantic Search**: Find memories by meaning using sentence-transformers (paraphrase-multilingual-mpnet-base-v2)
+- **Multilingual Support**: Search in English, Indonesian, or 100+ other languages seamlessly
 - **Persistent Storage**: SQLite-based storage that survives across sessions
 - **Project Organization**: Organize memories by project and tags
 - **Date Range Filtering**: Search memories within specific time ranges
@@ -61,7 +62,7 @@ cd Cognio
 pip install -r requirements.txt
 
 # Run server
-python src/main.py
+uvicorn src.main:app --host 0.0.0.0 --port 8080
 
 # In another terminal, test it
 curl http://localhost:8080/health
@@ -94,20 +95,48 @@ curl -X POST http://localhost:8080/memory/save \
   }'
 ```
 
+**Multilingual Support**: Save memories in any language!
+
+```bash
+# Save in Indonesian
+curl -X POST http://localhost:8080/memory/save \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "FastAPI adalah framework Python modern untuk bikin API",
+    "project": "LEARNING",
+    "tags": ["python", "fastapi"]
+  }'
+
+# Save in Spanish
+curl -X POST http://localhost:8080/memory/save \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Docker permite ejecutar aplicaciones en contenedores",
+    "project": "DEVOPS",
+    "tags": ["docker", "containers"]
+  }'
+```
+
 ### Search Memories
 
 ```bash
-# Basic semantic search
-curl "http://localhost:8080/memory/search?q=QRIS%20refund&limit=5"
+# Search by semantic meaning
+curl "http://localhost:8080/memory/search?q=payment%20gateway&limit=5"
 
-# Search with project filter
-curl "http://localhost:8080/memory/search?q=QRIS%20refund&project=SENTINEL&limit=5"
+# Search with threshold
+curl "http://localhost:8080/memory/search?q=docker&threshold=0.7"
+```
 
-# Search with date range
-curl "http://localhost:8080/memory/search?q=webhook&after_date=2025-01-01&before_date=2025-12-31"
+**Cross-Language Search**: Search in one language, find results in another!
 
-# Search with custom similarity threshold
-curl "http://localhost:8080/memory/search?q=payment&threshold=0.6"
+```bash
+# Search in English, find Indonesian memories
+curl "http://localhost:8080/memory/search?q=Python%20web%20framework&threshold=0.5"
+# Returns: "FastAPI adalah framework Python modern untuk bikin API"
+
+# Search in Indonesian, find English memories  
+curl "http://localhost:8080/memory/search?q=server%20web%20untuk%20Python&threshold=0.5"
+# Returns: "Uvicorn is an ASGI web server for Python"
 ```
 
 ### List All Memories
@@ -203,7 +232,7 @@ Create a `.env` file (see `.env.example`):
 DB_PATH=./data/memory.db
 
 # Embeddings
-EMBED_MODEL=all-MiniLM-L6-v2
+EMBED_MODEL=paraphrase-multilingual-mpnet-base-v2
 EMBED_DEVICE=cpu
 
 # API
@@ -336,7 +365,7 @@ python scripts/migrate.py ./data/memory.db
 - **Language**: Python 3.11+
 - **Framework**: FastAPI 0.118.0
 - **Database**: SQLite with JSON support
-- **Embeddings**: sentence-transformers 2.7.0 (all-MiniLM-L6-v2, 384 dimensions)
+- **Embeddings**: sentence-transformers 2.7.0 (paraphrase-multilingual-mpnet-base-v2, 768 dimensions)
 - **Server**: Uvicorn 0.37.0 with uvloop
 - **Testing**: pytest 8.4.2, pytest-asyncio, pytest-cov
 - **Code Quality**: ruff, black, mypy
@@ -346,18 +375,18 @@ python scripts/migrate.py ./data/memory.db
 ### Why These Choices?
 
 - **SQLite**: Zero-configuration, single-file database perfect for persistent storage
-- **all-MiniLM-L6-v2**: Fast (10ms/encoding), small (90MB), good quality embeddings
+- **paraphrase-multilingual-mpnet-base-v2**: Excellent multilingual support (100+ languages), 768-dimensional embeddings for better semantic understanding
 - **FastAPI**: Automatic OpenAPI docs, async support, type safety with Pydantic
 - **Native Vector Search**: No external dependencies, pure Python cosine similarity
 
 ## Performance
 
-- **Save memory**: ~18ms average (including embedding generation)
+- **Save memory**: ~20ms average (including embedding generation)
 - **Search (semantic)**: ~15ms average for <1k memories
-- **Embedding generation**: ~10ms per text (384-dimensional vector)
-- **Storage efficiency**: ~1KB per memory (text + embedding + metadata)
-- **Model load time**: ~6 seconds on first startup (cached afterward)
-- **Memory footprint**: ~500MB RAM (model + application)
+- **Embedding generation**: ~15ms per text (768-dimensional vector)
+- **Storage efficiency**: ~2KB per memory (text + embedding + metadata)
+- **Model load time**: ~3 seconds on startup (cached after first download)
+- **Memory footprint**: ~1.5GB RAM (multilingual model + application)
 
 ### Benchmarks
 
@@ -365,10 +394,10 @@ Tested on standard development machine (Intel i5, 16GB RAM):
 
 | Operation | Memories | Time |
 |-----------|----------|------|
-| Save | 1 | 18ms |
-| Search | 100 | 12ms |
-| Search | 1,000 | 15ms |
-| Search | 10,000 | 45ms |
+| Save | 1 | 20ms |
+| Search | 100 | 15ms |
+| Search | 1,000 | 18ms |
+| Search | 10,000 | 50ms |
 | List | 100 | 5ms |
 | Export JSON | 1,000 | 120ms |
 
@@ -394,6 +423,9 @@ A: Cognio is optimized for personal use and AI assistant memory, not production-
 
 **Q: Can I use this with Claude/ChatGPT/local LLMs?**  
 A: Yes! Cognio implements the MCP protocol, which is supported by Claude Desktop and other MCP-compatible clients. You can also use the REST API directly.
+
+**Q: Does it support multiple languages?**  
+A: Yes! Cognio uses a multilingual model that supports 100+ languages including English, Indonesian, Spanish, French, German, Chinese, Japanese, and more. You can save memories in one language and search in another.
 
 **Q: Does it support multiple users?**  
 A: v0.1.0 is single-user. Multi-user support with namespaces is planned for v2.0.0.

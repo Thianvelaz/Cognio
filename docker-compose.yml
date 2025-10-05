@@ -10,7 +10,7 @@ services:
       - ./data:/app/data
     environment:
       - DB_PATH=/app/data/memory.db
-      - EMBED_MODEL=all-MiniLM-L6-v2
+      - EMBED_MODEL=paraphrase-multilingual-mpnet-base-v2
       - EMBED_DEVICE=cpu
       - LOG_LEVEL=info
       - API_HOST=0.0.0.0

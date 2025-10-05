@@ -49,10 +49,10 @@ pip install -r requirements.txt
 
 ```bash
 # Start the server
-python src/main.py
+uvicorn src.main:app --host 0.0.0.0 --port 8080
 ```
 
-On first run, the server will download the embedding model (~90MB). This takes about 30 seconds.
+On first run, the server will download the embedding model (~1.1GB for multilingual support). This takes about 30 seconds.
 
 ### 3. Verify Installation
 
@@ -178,7 +178,7 @@ To use Cognio with Claude Desktop or other MCP clients:
 
 **Server won't start?**
 - Check if port 8080 is already in use: `lsof -i :8080`
-- Try a different port: `API_PORT=8081 python src/main.py`
+- Try a different port: `API_PORT=8081 uvicorn src.main:app --host 0.0.0.0 --port 8081`
 
 **Can't find saved memories?**
 - Check the database exists: `ls -lh data/memory.db`

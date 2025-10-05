@@ -22,7 +22,8 @@ RUN poetry config virtualenvs.create false \
 COPY src/ ./src/
 
 # Download embedding model during build (cache it)
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+# Note: This downloads ~1.1GB for multilingual support
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')"
 
 # Create data directory
 RUN mkdir -p /app/data
