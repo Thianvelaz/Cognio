@@ -1,8 +1,9 @@
 """Integration tests for API endpoints."""
 
+from collections.abc import Generator
+
 import pytest
 from httpx import ASGITransport, AsyncClient
-from typing import Generator
 
 from src.database import db
 from src.main import app
