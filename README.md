@@ -81,6 +81,14 @@ poetry run uvicorn src.main:app --reload
 curl http://localhost:8080/health
 ```
 
+## Documentation
+
+For detailed guides and advanced usage, see the full documentation:
+
+- **[Quick Start Guide](docs/quickstart.md)** - Step-by-step installation, first memory, configuration, and troubleshooting
+- **[API Reference](docs/api.md)** - Complete endpoint documentation with request/response schemas and error handling
+- **[Usage Examples](docs/examples.md)** - Real-world patterns, Python/Shell integrations, backup workflows, and advanced use cases
+
 ## Usage Examples
 
 ### Save a Memory
