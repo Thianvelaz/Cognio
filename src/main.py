@@ -4,8 +4,10 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Security, Header
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.security import APIKeyHeader
 
 from .config import settings
 from .database import db
@@ -55,6 +57,26 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify actual origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Optional API key security
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+async def verify_api_key(api_key: str | None = Security(api_key_header)) -> bool:
+    """Verify API key if configured."""
+    if settings.api_key:
+        if not api_key or api_key != settings.api_key:
+            raise HTTPException(status_code=403, detail="Invalid or missing API key")
+    return True
+
 
 @app.get("/")
 async def root() -> dict[str, str]:
@@ -67,7 +89,9 @@ async def root() -> dict[str, str]:
 
 
 @app.post("/memory/save", response_model=SaveMemoryResponse)
-async def save_memory(request: SaveMemoryRequest) -> SaveMemoryResponse:
+async def save_memory(
+    request: SaveMemoryRequest, authenticated: bool = Security(verify_api_key)
+) -> SaveMemoryResponse:
     """
     Save a new memory.
 
@@ -96,6 +120,8 @@ async def search_memory(
     tags: str | None = Query(None, description="Comma-separated tags"),
     limit: int = Query(5, ge=1, le=50, description="Maximum results"),
     threshold: float = Query(0.7, ge=0.0, le=1.0, description="Minimum similarity score"),
+    after_date: str | None = Query(None, description="Filter memories after date (ISO 8601)"),
+    before_date: str | None = Query(None, description="Filter memories before date (ISO 8601)"),
 ) -> SearchMemoryResponse:
     """
     Search memories using semantic similarity.
@@ -106,6 +132,8 @@ async def search_memory(
         tags: Comma-separated tags to filter
         limit: Maximum number of results
         threshold: Minimum similarity score
+        after_date: Filter memories after this date
+        before_date: Filter memories before this date
 
     Returns:
         SearchMemoryResponse with matching memories
@@ -115,7 +143,13 @@ async def search_memory(
         tag_list = [t.strip() for t in tags.split(",")] if tags else None
 
         results = memory_service.search_memory(
-            query=q, project=project, tags=tag_list, limit=limit, threshold=threshold
+            query=q,
+            project=project,
+            tags=tag_list,
+            limit=limit,
+            threshold=threshold,
+            after_date=after_date,
+            before_date=before_date,
         )
 
         return SearchMemoryResponse(query=q, results=results, total=len(results))
@@ -131,6 +165,7 @@ async def list_memories(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
     sort: str = Query("date", pattern="^(date|relevance)$", description="Sort order"),
+    q: str | None = Query(None, description="Query for relevance sorting"),
 ) -> ListMemoriesResponse:
     """
     List all memories with pagination.
@@ -141,6 +176,7 @@ async def list_memories(
         page: Page number (1-indexed)
         limit: Items per page
         sort: Sort order (date or relevance)
+        q: Query text for relevance sorting
 
     Returns:
         ListMemoriesResponse with paginated memories
@@ -150,7 +186,7 @@ async def list_memories(
         tag_list = [t.strip() for t in tags.split(",")] if tags else None
 
         memories, total = memory_service.list_memories(
-            project=project, tags=tag_list, page=page, limit=limit
+            project=project, tags=tag_list, page=page, limit=limit, sort=sort, search_query=q
         )
 
         total_pages = (total + limit - 1) // limit
@@ -164,7 +200,9 @@ async def list_memories(
 
 
 @app.delete("/memory/{memory_id}", response_model=DeleteMemoryResponse)
-async def delete_memory(memory_id: str) -> DeleteMemoryResponse:
+async def delete_memory(
+    memory_id: str, authenticated: bool = Security(verify_api_key)
+) -> DeleteMemoryResponse:
     """
     Delete a memory by ID.
 
@@ -187,7 +225,9 @@ async def delete_memory(memory_id: str) -> DeleteMemoryResponse:
 
 
 @app.post("/memory/bulk-delete", response_model=BulkDeleteResponse)
-async def bulk_delete_memories(request: BulkDeleteRequest) -> BulkDeleteResponse:
+async def bulk_delete_memories(
+    request: BulkDeleteRequest, authenticated: bool = Security(verify_api_key)
+) -> BulkDeleteResponse:
     """
     Bulk delete memories.
 

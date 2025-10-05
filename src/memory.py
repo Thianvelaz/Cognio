@@ -75,6 +75,8 @@ class MemoryService:
         tags: list[str] | None = None,
         limit: int = 5,
         threshold: float = 0.7,
+        after_date: str | None = None,
+        before_date: str | None = None,
     ) -> list[MemoryResult]:
         """
         Search memories using semantic similarity.
@@ -85,6 +87,8 @@ class MemoryService:
             tags: Optional tags filter
             limit: Maximum number of results
             threshold: Minimum similarity score
+            after_date: Filter memories after this date (ISO 8601)
+            before_date: Filter memories before this date (ISO 8601)
 
         Returns:
             List of matching memories with scores
@@ -101,6 +105,21 @@ class MemoryService:
 
         if tags:
             all_memories = [m for m in all_memories if any(tag in m.tags for tag in tags)]
+
+        # Filter by date range
+        if after_date:
+            try:
+                after_ts = int(datetime.fromisoformat(after_date.replace("Z", "+00:00")).timestamp())
+                all_memories = [m for m in all_memories if m.created_at >= after_ts]
+            except ValueError:
+                pass  # Ignore invalid date format
+
+        if before_date:
+            try:
+                before_ts = int(datetime.fromisoformat(before_date.replace("Z", "+00:00")).timestamp())
+                all_memories = [m for m in all_memories if m.created_at <= before_ts]
+            except ValueError:
+                pass  # Ignore invalid date format
 
         # Calculate similarities
         results: list[tuple[Memory, float]] = []
@@ -135,6 +154,8 @@ class MemoryService:
         tags: list[str] | None = None,
         page: int = 1,
         limit: int = 20,
+        sort: str = "date",
+        search_query: str | None = None,
     ) -> tuple[list[MemoryResult], int]:
         """
         List memories with pagination.
@@ -144,26 +165,61 @@ class MemoryService:
             tags: Optional tags filter
             page: Page number (1-indexed)
             limit: Items per page
+            sort: Sort order (date or relevance)
+            search_query: Query for relevance sorting
 
         Returns:
             Tuple of (memories, total_count)
         """
         offset = (page - 1) * limit
 
-        memories = db.list_memories(project=project, tags=tags, limit=limit, offset=offset)
-        total_count = db.count_memories(project=project, tags=tags)
+        # Get all memories for relevance sorting, or use database pagination for date
+        if sort == "relevance" and search_query:
+            all_memories = db.list_memories(project=project, tags=tags, limit=10000, offset=0)
+            total_count = len(all_memories)
 
-        results = [
-            MemoryResult(
-                id=memory.id,
-                text=memory.text,
-                score=None,
-                project=memory.project,
-                tags=memory.tags,
-                created_at=format_timestamp(memory.created_at),
-            )
-            for memory in memories
-        ]
+            # Generate query embedding and calculate scores
+            query_embedding = embedding_service.encode(search_query)
+            scored_memories = []
+
+            for memory in all_memories:
+                if memory.embedding:
+                    score = embedding_service.cosine_similarity(query_embedding, memory.embedding)
+                    scored_memories.append((memory, score))
+
+            # Sort by relevance score
+            scored_memories.sort(key=lambda x: x[1], reverse=True)
+
+            # Paginate
+            paginated = scored_memories[offset : offset + limit]
+
+            results = [
+                MemoryResult(
+                    id=memory.id,
+                    text=memory.text,
+                    score=round(score, 4),
+                    project=memory.project,
+                    tags=memory.tags,
+                    created_at=format_timestamp(memory.created_at),
+                )
+                for memory, score in paginated
+            ]
+        else:
+            # Default: sort by date
+            memories = db.list_memories(project=project, tags=tags, limit=limit, offset=offset)
+            total_count = db.count_memories(project=project, tags=tags)
+
+            results = [
+                MemoryResult(
+                    id=memory.id,
+                    text=memory.text,
+                    score=None,
+                    project=memory.project,
+                    tags=memory.tags,
+                    created_at=format_timestamp(memory.created_at),
+                )
+                for memory in memories
+            ]
 
         return results, total_count
 
