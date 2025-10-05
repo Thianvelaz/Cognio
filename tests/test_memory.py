@@ -2,13 +2,14 @@
 
 import pytest
 from datetime import datetime, timedelta
+from typing import Generator
 from src.memory import memory_service
 from src.database import db
 from src.models import SaveMemoryRequest
 
 
 @pytest.fixture(autouse=True)
-def setup_test_db() -> None:
+def setup_test_db() -> Generator[None, None, None]:
     """Setup test database before each test."""
     db.db_path = ":memory:"
     db.connect()
