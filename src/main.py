@@ -225,7 +225,7 @@ async def get_stats() -> StatsResponse:
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/memory/export")
+@app.get("/memory/export", response_model=None)
 async def export_memories(
     format: str = Query("json", pattern="^(json|markdown)$", description="Export format"),
     project: str | None = Query(None, description="Filter by project"),
