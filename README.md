@@ -406,7 +406,7 @@ A: Yes, but consider adding authentication, HTTPS, rate limiting, and monitoring
 
 ## Roadmap
 
-- [x] **v0.1.0**: Initial release (January 2025)
+- [x] **v0.1.0**: 
   - [x] Basic CRUD operations
   - [x] Semantic search with embeddings
   - [x] Project and tag organization
@@ -419,7 +419,7 @@ A: Yes, but consider adding authentication, HTTPS, rate limiting, and monitoring
   - [x] CI/CD with GitHub Actions
   - [x] Database migration system
 
-- [ ] **v0.2.0**: Enhanced Features (Q1 2025)
+- [ ] **v0.2.0**: 
   - [ ] Web UI for search and browsing
   - [ ] Auto-tagging with LLM
   - [ ] Memory summarization for long texts
@@ -427,7 +427,7 @@ A: Yes, but consider adding authentication, HTTPS, rate limiting, and monitoring
   - [ ] Backup and restore tools
   - [ ] Bulk import from text files
 
-- [ ] **v1.0.0**: Production Ready (Q2 2025)
+- [ ] **v1.0.0**: 
   - [ ] Performance optimizations (vector indexing)
   - [ ] Full-text search (hybrid with semantic)
   - [ ] Memory compression
@@ -435,14 +435,14 @@ A: Yes, but consider adding authentication, HTTPS, rate limiting, and monitoring
   - [ ] Plugin system
   - [ ] MCP 2.0 compliance
 
-- [ ] **v1.1.0**: Integrations (Q3 2025)
+- [ ] **v1.1.0**: 
   - [ ] Obsidian sync
   - [ ] Notion integration
   - [ ] VSCode extension
   - [ ] CLI tool
   - [ ] Slack/Discord bots
 
-- [ ] **v2.0.0**: Advanced (Q4 2025)
+- [ ] **v2.0.0**: 
   - [ ] Multi-user support with namespaces
   - [ ] Graph relationships (knowledge graph)
   - [ ] Time-based relevance decay

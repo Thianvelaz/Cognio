@@ -202,7 +202,7 @@ async def delete_memory(
     memory_id: str, authenticated: bool = Security(verify_api_key)
 ) -> DeleteMemoryResponse:
     """
-    Delete a memory by ID.
+    Delete a memory by ID (hard delete).
 
     Args:
         memory_id: Memory UUID
@@ -219,6 +219,36 @@ async def delete_memory(
         raise
     except Exception as e:
         logger.error(f"Error deleting memory: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.post("/memory/{memory_id}/archive", response_model=DeleteMemoryResponse)
+async def archive_memory(
+    memory_id: str, authenticated: bool = Security(verify_api_key)
+) -> DeleteMemoryResponse:
+    """
+    Archive a memory by ID (soft delete).
+
+    Archived memories are excluded from search and list operations
+    but not permanently deleted from the database.
+
+    Args:
+        memory_id: Memory UUID
+
+    Returns:
+        DeleteMemoryResponse with status
+    """
+    try:
+        from .database import db
+
+        archived = db.archive_memory(memory_id)
+        if not archived:
+            raise HTTPException(status_code=404, detail="Memory not found or already archived")
+        return DeleteMemoryResponse(deleted=True, id=memory_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error archiving memory: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

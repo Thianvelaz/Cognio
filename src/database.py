@@ -51,7 +51,8 @@ class Database:
                 project TEXT,
                 tags TEXT,
                 created_at INTEGER,
-                updated_at INTEGER
+                updated_at INTEGER,
+                archived INTEGER DEFAULT 0
             )
         """
         )
@@ -60,6 +61,7 @@ class Database:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_project ON memories(project)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_created ON memories(created_at)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_hash ON memories(text_hash)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_archived ON memories(archived)")
 
         self.conn.commit()
         logger.info("Database schema initialized")
@@ -121,7 +123,9 @@ class Database:
 
     def get_memory_by_hash(self, text_hash: str) -> Memory | None:
         """Retrieve a memory by text hash (for deduplication)."""
-        cursor = self.execute("SELECT * FROM memories WHERE text_hash = ?", (text_hash,))
+        cursor = self.execute(
+            "SELECT * FROM memories WHERE text_hash = ? AND archived = 0", (text_hash,)
+        )
         row = cursor.fetchone()
 
         if row is None:
@@ -137,7 +141,7 @@ class Database:
         offset: int = 0,
     ) -> list[Memory]:
         """List memories with optional filtering."""
-        query = "SELECT * FROM memories WHERE 1=1"
+        query = "SELECT * FROM memories WHERE archived = 0"
         params: list[Any] = []
 
         if project:
@@ -160,7 +164,7 @@ class Database:
 
     def count_memories(self, project: str | None = None, tags: list[str] | None = None) -> int:
         """Count total memories with optional filtering."""
-        query = "SELECT COUNT(*) FROM memories WHERE 1=1"
+        query = "SELECT COUNT(*) FROM memories WHERE archived = 0"
         params: list[Any] = []
 
         if project:
@@ -177,13 +181,21 @@ class Database:
         return result[0] if result else 0
 
     def delete_memory(self, memory_id: str) -> bool:
-        """Delete a memory by ID."""
+        """Delete a memory by ID (hard delete)."""
         cursor = self.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
         self.commit()
         return cursor.rowcount > 0
 
+    def archive_memory(self, memory_id: str) -> bool:
+        """Archive a memory by ID (soft delete)."""
+        cursor = self.execute(
+            "UPDATE memories SET archived = 1 WHERE id = ? AND archived = 0", (memory_id,)
+        )
+        self.commit()
+        return cursor.rowcount > 0
+
     def bulk_delete(self, project: str | None = None, before_timestamp: int | None = None) -> int:
-        """Bulk delete memories."""
+        """Bulk delete memories (hard delete)."""
         query = "DELETE FROM memories WHERE 1=1"
         params: list[Any] = []
 
@@ -200,8 +212,8 @@ class Database:
         return cursor.rowcount
 
     def get_all_memories(self) -> list[Memory]:
-        """Get all memories (for semantic search)."""
-        cursor = self.execute("SELECT * FROM memories ORDER BY created_at DESC")
+        """Get all memories (for semantic search, excluding archived)."""
+        cursor = self.execute("SELECT * FROM memories WHERE archived = 0 ORDER BY created_at DESC")
         rows = cursor.fetchall()
         return [self._row_to_memory(row) for row in rows]
 
@@ -209,20 +221,20 @@ class Database:
         """Get database statistics."""
         total = self.count_memories()
 
-        # Count by project
+        # Count by project (excluding archived)
         cursor = self.execute(
             """
             SELECT project, COUNT(*) as count
             FROM memories
-            WHERE project IS NOT NULL
+            WHERE project IS NOT NULL AND archived = 0
             GROUP BY project
             ORDER BY count DESC
             """
         )
         by_project = {row["project"]: row["count"] for row in cursor.fetchall()}
 
-        # Get top tags (simple implementation)
-        cursor = self.execute("SELECT tags FROM memories WHERE tags IS NOT NULL")
+        # Get top tags (excluding archived)
+        cursor = self.execute("SELECT tags FROM memories WHERE tags IS NOT NULL AND archived = 0")
         all_tags: dict[str, int] = {}
         for row in cursor.fetchall():
             tags = json.loads(row["tags"])
