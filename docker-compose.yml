@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  cognio:
+    build: .
+    container_name: cognio
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DB_PATH=/app/data/memory.db
+      - EMBED_MODEL=all-MiniLM-L6-v2
+      - EMBED_DEVICE=cpu
+      - LOG_LEVEL=info
+      - API_HOST=0.0.0.0
+      - API_PORT=8080
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
