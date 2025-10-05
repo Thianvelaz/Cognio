@@ -1,7 +1,7 @@
 """Embedding generation for semantic search."""
 
 import logging
-from typing import Any
+
 import numpy as np
 from sentence_transformers import SentenceTransformer
 

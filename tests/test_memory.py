@@ -1,10 +1,12 @@
 """Unit tests for memory service."""
 
-import pytest
+from collections.abc import Generator
 from datetime import datetime, timedelta
-from typing import Generator
-from src.memory import memory_service
+
+import pytest
+
 from src.database import db
+from src.memory import memory_service
 from src.models import SaveMemoryRequest
 
 
@@ -55,9 +57,7 @@ def test_search_memory() -> None:
         SaveMemoryRequest(text="JavaScript for web development", project="WEB", tags=["js"])
     )
     memory_service.save_memory(
-        SaveMemoryRequest(
-            text="Machine learning with Python", project="AI", tags=["python", "ml"]
-        )
+        SaveMemoryRequest(text="Machine learning with Python", project="AI", tags=["python", "ml"])
     )
 
     # Search for Python-related
@@ -120,12 +120,8 @@ def test_list_memories() -> None:
 
 def test_list_with_project_filter() -> None:
     """Test listing with project filter."""
-    memory_service.save_memory(
-        SaveMemoryRequest(text="AI memory", project="AI", tags=["ai"])
-    )
-    memory_service.save_memory(
-        SaveMemoryRequest(text="WEB memory", project="WEB", tags=["web"])
-    )
+    memory_service.save_memory(SaveMemoryRequest(text="AI memory", project="AI", tags=["ai"]))
+    memory_service.save_memory(SaveMemoryRequest(text="WEB memory", project="WEB", tags=["web"]))
 
     memories, total = memory_service.list_memories(project="AI", page=1, limit=10)
 
@@ -136,9 +132,7 @@ def test_list_with_project_filter() -> None:
 def test_list_with_relevance_sort() -> None:
     """Test listing with relevance sorting."""
     memory_service.save_memory(
-        SaveMemoryRequest(
-            text="Python programming language", project="CODE", tags=["python"]
-        )
+        SaveMemoryRequest(text="Python programming language", project="CODE", tags=["python"])
     )
     memory_service.save_memory(
         SaveMemoryRequest(text="JavaScript is cool", project="CODE", tags=["js"])

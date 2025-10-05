@@ -1,15 +1,15 @@
 """Core memory operations for Cognio."""
 
-import uuid
 import logging
+import uuid
 from datetime import datetime
 from typing import Any
 
-from .models import Memory, SaveMemoryRequest, MemoryResult
+from .config import settings
 from .database import db
 from .embeddings import embedding_service
-from .utils import generate_text_hash, get_timestamp, format_timestamp
-from .config import settings
+from .models import Memory, MemoryResult, SaveMemoryRequest
+from .utils import format_timestamp, generate_text_hash, get_timestamp
 
 logger = logging.getLogger(__name__)
 
@@ -109,14 +109,18 @@ class MemoryService:
         # Filter by date range
         if after_date:
             try:
-                after_ts = int(datetime.fromisoformat(after_date.replace("Z", "+00:00")).timestamp())
+                after_ts = int(
+                    datetime.fromisoformat(after_date.replace("Z", "+00:00")).timestamp()
+                )
                 all_memories = [m for m in all_memories if m.created_at >= after_ts]
             except ValueError:
                 pass  # Ignore invalid date format
 
         if before_date:
             try:
-                before_ts = int(datetime.fromisoformat(before_date.replace("Z", "+00:00")).timestamp())
+                before_ts = int(
+                    datetime.fromisoformat(before_date.replace("Z", "+00:00")).timestamp()
+                )
                 all_memories = [m for m in all_memories if m.created_at <= before_ts]
             except ValueError:
                 pass  # Ignore invalid date format

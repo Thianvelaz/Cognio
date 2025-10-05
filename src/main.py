@@ -1,10 +1,10 @@
 """FastAPI application for Cognio server."""
 
 import logging
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
 
-from fastapi import FastAPI, HTTPException, Query, Security, Header
+from fastapi import FastAPI, HTTPException, Query, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.security import APIKeyHeader
@@ -14,13 +14,13 @@ from .database import db
 from .embeddings import embedding_service
 from .memory import memory_service
 from .models import (
+    BulkDeleteRequest,
+    BulkDeleteResponse,
+    DeleteMemoryResponse,
+    ListMemoriesResponse,
     SaveMemoryRequest,
     SaveMemoryResponse,
     SearchMemoryResponse,
-    ListMemoriesResponse,
-    DeleteMemoryResponse,
-    BulkDeleteRequest,
-    BulkDeleteResponse,
     StatsResponse,
 )
 
@@ -103,9 +103,7 @@ async def save_memory(
     """
     try:
         memory_id, is_duplicate, reason = memory_service.save_memory(request)
-        return SaveMemoryResponse(
-            id=memory_id, saved=True, reason=reason, duplicate=is_duplicate
-        )
+        return SaveMemoryResponse(id=memory_id, saved=True, reason=reason, duplicate=is_duplicate)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -238,9 +236,7 @@ async def bulk_delete_memories(
         BulkDeleteResponse with count of deleted memories
     """
     try:
-        count = memory_service.bulk_delete(
-            project=request.project, before_date=request.before_date
-        )
+        count = memory_service.bulk_delete(project=request.project, before_date=request.before_date)
         return BulkDeleteResponse(deleted_count=count)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

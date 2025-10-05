@@ -1,6 +1,5 @@
 """Pydantic models for request/response validation."""
 
-from typing import Any
 from pydantic import BaseModel, Field
 
 

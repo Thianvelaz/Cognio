@@ -1,6 +1,7 @@
 """Unit tests for embedding service."""
 
 import pytest
+
 from src.embeddings import EmbeddingService
 
 

@@ -1,8 +1,8 @@
 """Database management for Cognio."""
 
-import sqlite3
 import json
 import logging
+import sqlite3
 from pathlib import Path
 from typing import Any
 
@@ -41,7 +41,8 @@ class Database:
         cursor = self.conn.cursor()
 
         # Main memories table
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS memories (
                 id TEXT PRIMARY KEY,
                 text TEXT NOT NULL,
@@ -52,7 +53,8 @@ class Database:
                 created_at INTEGER,
                 updated_at INTEGER
             )
-        """)
+        """
+        )
 
         # Indexes for better query performance
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_project ON memories(project)")
@@ -210,10 +212,10 @@ class Database:
         # Count by project
         cursor = self.execute(
             """
-            SELECT project, COUNT(*) as count 
-            FROM memories 
-            WHERE project IS NOT NULL 
-            GROUP BY project 
+            SELECT project, COUNT(*) as count
+            FROM memories
+            WHERE project IS NOT NULL
+            GROUP BY project
             ORDER BY count DESC
             """
         )

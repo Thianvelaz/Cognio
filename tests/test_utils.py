@@ -1,6 +1,6 @@
 """Unit tests for utility functions."""
 
-from src.utils import generate_text_hash, get_timestamp, format_timestamp
+from src.utils import format_timestamp, generate_text_hash, get_timestamp
 
 
 def test_generate_text_hash() -> None:
