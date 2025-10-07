@@ -13,6 +13,9 @@ from .utils import format_timestamp, generate_text_hash, get_timestamp
 
 logger = logging.getLogger(__name__)
 
+# Constants
+_TIMEZONE_OFFSET = "+00:00"
+
 
 class MemoryService:
     """Service for managing memories."""
@@ -110,7 +113,7 @@ class MemoryService:
         if after_date:
             try:
                 after_ts = int(
-                    datetime.fromisoformat(after_date.replace("Z", "+00:00")).timestamp()
+                    datetime.fromisoformat(after_date.replace("Z", _TIMEZONE_OFFSET)).timestamp()
                 )
                 all_memories = [m for m in all_memories if m.created_at >= after_ts]
             except ValueError:
@@ -119,7 +122,7 @@ class MemoryService:
         if before_date:
             try:
                 before_ts = int(
-                    datetime.fromisoformat(before_date.replace("Z", "+00:00")).timestamp()
+                    datetime.fromisoformat(before_date.replace("Z", _TIMEZONE_OFFSET)).timestamp()
                 )
                 all_memories = [m for m in all_memories if m.created_at <= before_ts]
             except ValueError:
@@ -258,7 +261,7 @@ class MemoryService:
         before_timestamp = None
         if before_date:
             try:
-                dt = datetime.fromisoformat(before_date.replace("Z", "+00:00"))
+                dt = datetime.fromisoformat(before_date.replace("Z", _TIMEZONE_OFFSET))
                 before_timestamp = int(dt.timestamp())
             except ValueError as e:
                 raise ValueError(f"Invalid date format: {before_date}") from e

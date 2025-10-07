@@ -11,6 +11,10 @@ from .models import Memory
 
 logger = logging.getLogger(__name__)
 
+# Constants
+_DB_NOT_CONNECTED_ERROR = "Database not connected"
+_PROJECT_FILTER_SQL = " AND project = ?"
+
 
 class Database:
     """SQLite database manager for memories."""
@@ -36,7 +40,7 @@ class Database:
     def _init_schema(self) -> None:
         """Create tables if they don't exist."""
         if self.conn is None:
-            raise RuntimeError("Database not connected")
+            raise RuntimeError(_DB_NOT_CONNECTED_ERROR)
 
         cursor = self.conn.cursor()
 
@@ -75,13 +79,13 @@ class Database:
     def execute(self, query: str, params: tuple[Any, ...] = ()) -> sqlite3.Cursor:
         """Execute a query and return cursor."""
         if self.conn is None:
-            raise RuntimeError("Database not connected")
+            raise RuntimeError(_DB_NOT_CONNECTED_ERROR)
         return self.conn.execute(query, params)
 
     def commit(self) -> None:
         """Commit current transaction."""
         if self.conn is None:
-            raise RuntimeError("Database not connected")
+            raise RuntimeError(_DB_NOT_CONNECTED_ERROR)
         self.conn.commit()
 
     def save_memory(self, memory: Memory) -> None:
@@ -145,7 +149,7 @@ class Database:
         params: list[Any] = []
 
         if project:
-            query += " AND project = ?"
+            query += _PROJECT_FILTER_SQL
             params.append(project)
 
         if tags:
@@ -168,7 +172,7 @@ class Database:
         params: list[Any] = []
 
         if project:
-            query += " AND project = ?"
+            query += _PROJECT_FILTER_SQL
             params.append(project)
 
         if tags:
@@ -200,7 +204,7 @@ class Database:
         params: list[Any] = []
 
         if project:
-            query += " AND project = ?"
+            query += _PROJECT_FILTER_SQL
             params.append(project)
 
         if before_timestamp:

@@ -31,6 +31,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Constants
+_INTERNAL_SERVER_ERROR = "Internal server error"
+_FILTER_BY_PROJECT_DESC = "Filter by project"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -70,16 +74,15 @@ app.add_middleware(
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
-async def verify_api_key(api_key: str | None = Security(api_key_header)) -> bool:
+def verify_api_key(api_key: str | None = Security(api_key_header)) -> bool:
     """Verify API key if configured."""
-    if settings.api_key:
-        if not api_key or api_key != settings.api_key:
-            raise HTTPException(status_code=403, detail="Invalid or missing API key")
+    if settings.api_key and (not api_key or api_key != settings.api_key):
+        raise HTTPException(status_code=403, detail="Invalid or missing API key")
     return True
 
 
 @app.get("/")
-async def root() -> dict[str, str]:
+def root() -> dict[str, str]:
     """Root endpoint."""
     return {
         "name": "Cognio",
@@ -108,13 +111,13 @@ async def save_memory(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error saving memory: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=_INTERNAL_SERVER_ERROR)
 
 
 @app.get("/memory/search", response_model=SearchMemoryResponse)
 async def search_memory(
     q: str = Query(..., description="Search query"),
-    project: str | None = Query(None, description="Filter by project"),
+    project: str | None = Query(None, description=_FILTER_BY_PROJECT_DESC),
     tags: str | None = Query(None, description="Comma-separated tags"),
     limit: int = Query(5, ge=1, le=50, description="Maximum results"),
     threshold: float = Query(0.7, ge=0.0, le=1.0, description="Minimum similarity score"),
@@ -153,12 +156,12 @@ async def search_memory(
         return SearchMemoryResponse(query=q, results=results, total=len(results))
     except Exception as e:
         logger.error(f"Error searching memories: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=_INTERNAL_SERVER_ERROR)
 
 
 @app.get("/memory/list", response_model=ListMemoriesResponse)
 async def list_memories(
-    project: str | None = Query(None, description="Filter by project"),
+    project: str | None = Query(None, description=_FILTER_BY_PROJECT_DESC),
     tags: str | None = Query(None, description="Comma-separated tags"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
@@ -194,7 +197,7 @@ async def list_memories(
         )
     except Exception as e:
         logger.error(f"Error listing memories: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=_INTERNAL_SERVER_ERROR)
 
 
 @app.delete("/memory/{memory_id}", response_model=DeleteMemoryResponse)
@@ -219,7 +222,7 @@ async def delete_memory(
         raise
     except Exception as e:
         logger.error(f"Error deleting memory: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=_INTERNAL_SERVER_ERROR)
 
 
 @app.post("/memory/{memory_id}/archive", response_model=DeleteMemoryResponse)
@@ -249,7 +252,7 @@ async def archive_memory(
         raise
     except Exception as e:
         logger.error(f"Error archiving memory: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=_INTERNAL_SERVER_ERROR)
 
 
 @app.post("/memory/bulk-delete", response_model=BulkDeleteResponse)
@@ -272,7 +275,7 @@ async def bulk_delete_memories(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error bulk deleting memories: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=_INTERNAL_SERVER_ERROR)
 
 
 @app.get("/memory/stats", response_model=StatsResponse)
@@ -288,13 +291,13 @@ async def get_stats() -> StatsResponse:
         return StatsResponse(**stats)
     except Exception as e:
         logger.error(f"Error getting stats: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=_INTERNAL_SERVER_ERROR)
 
 
 @app.get("/memory/export", response_model=None)
 async def export_memories(
     format: str = Query("json", pattern="^(json|markdown)$", description="Export format"),
-    project: str | None = Query(None, description="Filter by project"),
+    project: str | None = Query(None, description=_FILTER_BY_PROJECT_DESC),
 ) -> JSONResponse | PlainTextResponse:
     """
     Export memories to JSON or Markdown.
@@ -315,7 +318,7 @@ async def export_memories(
             return PlainTextResponse(content=data, media_type="text/markdown")
     except Exception as e:
         logger.error(f"Error exporting memories: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=_INTERNAL_SERVER_ERROR)
 
 
 @app.get("/health")

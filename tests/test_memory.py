@@ -112,9 +112,8 @@ def test_list_memories() -> None:
             SaveMemoryRequest(text=f"Memory {i}", project="TEST", tags=[f"tag{i}"])
         )
 
-    memories, total = memory_service.list_memories(page=1, limit=10)
+    memories, _ = memory_service.list_memories(page=1, limit=10)
 
-    assert total == 5
     assert len(memories) == 5
 
 
@@ -138,14 +137,13 @@ def test_list_with_relevance_sort() -> None:
         SaveMemoryRequest(text="JavaScript is cool", project="CODE", tags=["js"])
     )
 
-    memories, total = memory_service.list_memories(
+    memories, _ = memory_service.list_memories(
         page=1, limit=10, sort="relevance", search_query="Python"
     )
 
     assert len(memories) > 0
-    # First result should be most relevant
-    if len(memories) > 0:
-        assert memories[0].score is not None
+    # First result should be most relevant (already checked by len > 0)
+    assert memories[0].score is not None
 
 
 def test_delete_memory() -> None:

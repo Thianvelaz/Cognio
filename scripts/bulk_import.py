@@ -200,6 +200,75 @@ def import_from_markdown(
     return imported
 
 
+def detect_format(file_path: Path, format_arg: str) -> str | None:
+    """
+    Detect file format from extension.
+
+    Args:
+        file_path: Path to file
+        format_arg: Format argument from CLI
+
+    Returns:
+        Detected format or None if cannot detect
+    """
+    if format_arg != "auto":
+        return format_arg
+
+    suffix = file_path.suffix.lower()
+    format_map = {
+        ".json": "json",
+        ".md": "markdown",
+        ".txt": "text",
+        ".text": "text",
+    }
+    return format_map.get(suffix)
+
+
+def check_server_health(url: str) -> bool:
+    """
+    Check if Cognio server is reachable.
+
+    Args:
+        url: Server URL
+
+    Returns:
+        True if server is healthy, False otherwise
+    """
+    try:
+        response = requests.get(f"{url}/health", timeout=5)
+        response.raise_for_status()
+        logger.info(f"Connected to Cognio server at {url}")
+        return True
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Cannot connect to Cognio server: {e}")
+        return False
+
+
+def perform_import(format_type: str, file_path: Path, url: str, project: str | None, api_key: str | None) -> int:
+    """
+    Perform import based on format type.
+
+    Args:
+        format_type: Format type (json, text, markdown)
+        file_path: Path to file
+        url: Server URL
+        project: Optional project name
+        api_key: Optional API key
+
+    Returns:
+        Number of imported memories
+    """
+    if format_type == "json":
+        return import_from_json(file_path, url, api_key)
+    elif format_type == "text":
+        return import_from_text(file_path, url, project, api_key)
+    elif format_type == "markdown":
+        return import_from_markdown(file_path, url, project, api_key)
+    else:
+        logger.error(f"Unsupported format: {format_type}")
+        return -1
+
+
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -241,54 +310,32 @@ Examples:
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    # Check file exists
     if not args.file.exists():
         logger.error(f"File not found: {args.file}")
         return 1
 
-    # Auto-detect format
-    format_type = args.format
-    if format_type == "auto":
-        suffix = args.file.suffix.lower()
-        if suffix == ".json":
-            format_type = "json"
-        elif suffix == ".md":
-            format_type = "markdown"
-        elif suffix in [".txt", ".text"]:
-            format_type = "text"
-        else:
-            logger.error(f"Cannot auto-detect format for {suffix} files. Use --format option.")
-            return 1
+    format_type = detect_format(args.file, args.format)
+    if not format_type:
+        logger.error(f"Cannot auto-detect format for {args.file.suffix} files. Use --format option.")
+        return 1
 
     logger.info(f"Importing from {args.file} (format: {format_type})")
 
-    # Check server is reachable
-    try:
-        response = requests.get(f"{args.url}/health", timeout=5)
-        response.raise_for_status()
-        logger.info(f"Connected to Cognio server at {args.url}")
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Cannot connect to Cognio server: {e}")
+    if not check_server_health(args.url):
         return 1
 
-    # Import based on format
     try:
-        if format_type == "json":
-            imported = import_from_json(args.file, args.url, args.api_key)
-        elif format_type == "text":
-            imported = import_from_text(args.file, args.url, args.project, args.api_key)
-        elif format_type == "markdown":
-            imported = import_from_markdown(args.file, args.url, args.project, args.api_key)
-        else:
-            logger.error(f"Unsupported format: {format_type}")
+        imported = perform_import(format_type, args.file, args.url, args.project, args.api_key)
+        
+        if imported < 0:
             return 1
-
+        
         if imported > 0:
             logger.info(f"Successfully imported {imported} memories")
-            return 0
         else:
             logger.warning("No new memories imported")
-            return 0
+        
+        return 0
 
     except Exception as e:
         logger.error(f"Import failed: {e}")

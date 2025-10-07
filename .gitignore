@@ -1,11 +1,12 @@
 # Project specification
 project.txt
-
+ROADMAP.md
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.sonarlint
 .Python
 build/
 develop-eggs/

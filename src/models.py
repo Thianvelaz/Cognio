@@ -2,6 +2,9 @@
 
 from pydantic import BaseModel, Field
 
+# Constants
+_FILTER_BY_PROJECT_DESC = "Filter by project"
+
 
 # Request models
 class SaveMemoryRequest(BaseModel):
@@ -16,7 +19,7 @@ class SearchMemoryParams(BaseModel):
     """Parameters for searching memories."""
 
     q: str = Field(..., description="Search query")
-    project: str | None = Field(None, description="Filter by project")
+    project: str | None = Field(None, description=_FILTER_BY_PROJECT_DESC)
     tags: str | None = Field(None, description="Comma-separated tags")
     limit: int = Field(5, ge=1, le=50, description="Maximum results")
     threshold: float = Field(0.7, ge=0.0, le=1.0, description="Minimum similarity score")
@@ -25,7 +28,7 @@ class SearchMemoryParams(BaseModel):
 class ListMemoriesParams(BaseModel):
     """Parameters for listing memories."""
 
-    project: str | None = Field(None, description="Filter by project")
+    project: str | None = Field(None, description=_FILTER_BY_PROJECT_DESC)
     tags: str | None = Field(None, description="Comma-separated tags")
     page: int = Field(1, ge=1, description="Page number")
     limit: int = Field(20, ge=1, le=100, description="Items per page")
@@ -43,7 +46,7 @@ class ExportParams(BaseModel):
     """Parameters for exporting memories."""
 
     format: str = Field("json", pattern="^(json|markdown)$", description="Export format")
-    project: str | None = Field(None, description="Filter by project")
+    project: str | None = Field(None, description=_FILTER_BY_PROJECT_DESC)
 
 
 # Response models

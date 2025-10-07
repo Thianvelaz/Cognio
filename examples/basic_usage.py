@@ -97,8 +97,8 @@ def main():
     # Get stats
     get_stats_example()
 
-    # Delete memory (optional)
-    # delete_memory_example(memory_id)
+    # Delete memory (optional - uncomment to use)
+    delete_memory_example(memory_id)
 
 
 if __name__ == "__main__":
